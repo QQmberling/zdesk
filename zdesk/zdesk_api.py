@@ -5372,5 +5372,3 @@ class ZendeskAPI(object):
         "https://developer.zendesk.com/api-reference/ticketing/workspaces#reorder-workspaces"
         api_path = "/api/v2/workspaces/reorder"
         return self.call(api_path, method="PUT", data=data, **kwargs)
-
-

@@ -377,6 +377,9 @@ class Zendesk(ZendeskAPI):
             path = path + raw_query
             kwargs = None
 
+        if get_all_pages:
+            kwargs['page[size]'] = 100
+
         url = self.zdesk_url + path
 
         if files:
@@ -456,9 +459,11 @@ class Zendesk(ZendeskAPI):
             # Also return false non strings (0, [], (), {})
             if response.content.strip() and 'json' in response.headers['content-type']:
                 content = response.json()
-
+                if get_all_pages and 'meta' in content and content['meta'].get('has_more', False):
+                    url = content['links']['next']
+                else:
                 # set url to the next page if that was returned in the response
-                url = content.get('next_page', None)
+                    url = content.get('next_page', None)
                 # url we get above already has the start_time appended to it,
                 # specific to incremental exports
                 kwargs = {}
@@ -466,7 +471,10 @@ class Zendesk(ZendeskAPI):
                 try:
                     content = response.json()
                     # set url to the next page if that was returned in the response
-                    url = content.get('next_page', None)
+                    if get_all_pages and 'meta' in content and content['meta'].get('has_more', False):
+                        url = content['links']['next']
+                    else:
+                        url = content.get('next_page', None)
                     # url we get above already has the start_time appended to it,
                     # specific to incremental exports
                     kwargs = {}
