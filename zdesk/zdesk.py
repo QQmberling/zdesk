@@ -307,7 +307,7 @@ class Zendesk(ZendeskAPI):
         self._max_retries = 0
 
     def call(self, path, query=None, method='GET', data=None,
-             files=None, get_all_pages=False, complete_response=False,
+             files=None, get_all_pages=False, old_pagination=False, complete_response=False,
              retry_on=None, max_retries=0, raw_query=None, retval=None,
              **kwargs):
         """Make a REST call to the Zendesk web service.
@@ -354,6 +354,7 @@ class Zendesk(ZendeskAPI):
                                  data=data,
                                  files=files,
                                  get_all_pages=get_all_pages,
+                                 old_pagination=old_pagination,
                                  complete_response=complete_response)
             finally:
                 self._retry_on = _retry_on
@@ -377,7 +378,7 @@ class Zendesk(ZendeskAPI):
             path = path + raw_query
             kwargs = None
 
-        if get_all_pages:
+        if get_all_pages and not old_pagination:
             kwargs['page[size]'] = 100
 
         url = self.zdesk_url + path
@@ -459,7 +460,7 @@ class Zendesk(ZendeskAPI):
             # Also return false non strings (0, [], (), {})
             if response.content.strip() and 'json' in response.headers['content-type']:
                 content = response.json()
-                if get_all_pages and 'meta' in content and content['meta'].get('has_more', False):
+                if get_all_pages and not old_pagination and 'meta' in content and content['meta'].get('has_more', False):
                     url = content['links']['next']
                 else:
                 # set url to the next page if that was returned in the response
@@ -471,7 +472,7 @@ class Zendesk(ZendeskAPI):
                 try:
                     content = response.json()
                     # set url to the next page if that was returned in the response
-                    if get_all_pages and 'meta' in content and content['meta'].get('has_more', False):
+                    if get_all_pages and not old_pagination and 'meta' in content and content['meta'].get('has_more', False):
                         url = content['links']['next']
                     else:
                         url = content.get('next_page', None)
